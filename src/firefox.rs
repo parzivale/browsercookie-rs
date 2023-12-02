@@ -184,13 +184,18 @@ async fn load_from_recovery(
 pub(crate) async fn load(
     cookie_jar: &mut CookieJar,
     regex_and_attribute: &(Regex, Attribute),
+    master_path: Option<&Path>,
 ) -> Result<(), Box<dyn Error>> {
     // Returns a CookieJar if following steps go right
     //
     // 1. Get default profile path for firefox from master ini profiles config.
     // 2. Load cookies from recovery json (sessionstore-backups/recovery.jsonlz4)
     //    of the default profile.
-    let master_profile_path = get_master_profile_path();
+    let master_profile_path = if let Some(path) = master_path {
+        PathBuf::from(path)
+    } else {
+        get_master_profile_path()
+    };
     if !master_profile_path.exists() {
         return Err(Box::new(BrowsercookieError::ProfileMissing(String::from(
             "Firefox profile path doesn't exist",

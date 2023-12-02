@@ -5,13 +5,13 @@ use regex::Regex;
 #[macro_use]
 extern crate clap;
 
-async fn curl_output(cookie_finder: &CookieFinder) {
+async fn curl_output<'a>(cookie_finder: &CookieFinder<'a>) {
     let cookie_jar = cookie_finder.find().await;
     let cookie = cookie_jar.iter().last().expect("Cookie not found");
     print!("Cookie: {}", cookie);
 }
 
-async fn python_output(cookie_finder: &CookieFinder) {
+async fn python_output<'a>(cookie_finder: &CookieFinder<'a>) {
     let cookie_jar = cookie_finder.find().await;
     let cookie = cookie_jar.iter().last().expect("Cookie not found");
     print!("{{'Cookie': '{}'}}", cookie);
