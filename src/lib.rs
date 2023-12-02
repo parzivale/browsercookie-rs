@@ -39,7 +39,7 @@
 //! ```
 use cookie::CookieJar;
 use regex::Regex;
-use std::collections::HashSet;
+use std::{collections::HashSet, path::Path};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
@@ -63,17 +63,17 @@ pub enum Attribute {
 }
 
 #[derive(Default)]
-pub struct CookieFinder {
+pub struct CookieFinder<'a> {
     regex_and_attribute_pairs: Vec<(Regex, Attribute)>,
     browsers: HashSet<Browser>,
+    master_path: Option<&'a Path>,
 }
-
 #[derive(Default)]
-pub struct CookieFinderBuilder {
-    cookie_finder: CookieFinder,
+pub struct CookieFinderBuilder<'a> {
+    cookie_finder: CookieFinder<'a>,
 }
 
-impl CookieFinderBuilder {
+impl<'a> CookieFinderBuilder<'a> {
     pub fn with_regexp(mut self, regex: Regex, attribute: Attribute) -> Self {
         self.cookie_finder
             .regex_and_attribute_pairs
@@ -86,7 +86,12 @@ impl CookieFinderBuilder {
         self
     }
 
-    pub fn build(mut self) -> CookieFinder {
+    pub fn with_master_path(mut self, master_path: &'a Path) -> Self {
+        let _ =self.cookie_finder.master_path.insert(master_path);
+        self
+    }
+
+    pub fn build(mut self) -> CookieFinder<'a> {
         if self.cookie_finder.regex_and_attribute_pairs.is_empty() {
             self.cookie_finder
                 .regex_and_attribute_pairs
@@ -101,8 +106,8 @@ impl CookieFinderBuilder {
     }
 }
 
-impl CookieFinder {
-    pub fn builder() -> CookieFinderBuilder {
+impl<'a> CookieFinder<'a> {
+    pub fn builder() -> CookieFinderBuilder<'a> {
         CookieFinderBuilder::default()
     }
 
@@ -112,7 +117,7 @@ impl CookieFinder {
             for browser in &self.browsers {
                 match browser {
                     Browser::Firefox => {
-                        firefox::load(&mut cookie_jar, regex_and_attribute)
+                        firefox::load(&mut cookie_jar, regex_and_attribute, None)
                             .await
                             .expect("Something went wrong loading the cookies from Firefox");
                     }
